@@ -21,7 +21,7 @@ app.post('/api/movies', async (req, res) => {
     const newMovie = await db.addNewMovie(req.body); 
     res.status(201).json(newMovie);
     }catch(err){
-        res.status(204).json({message: err});
+        res.status(500).json({message: err});
       };
   });
 
@@ -32,7 +32,7 @@ app.get('/api/movies',async (req, res) => {
         res.json(data);
     }
     catch(err){
-        res.status(204).json({message: err});
+        res.status(500).json({message: err});
     }
   });
 
@@ -45,7 +45,7 @@ app.get('/api/movies/:id', async (req, res) => {
         }
         res.send("Not Found!");
       }catch(err){
-        res.status(204).json({message: err});
+        res.status(500).json({message: err});
       }  });
 
 //DELETE MOVIE BY ID
@@ -53,7 +53,7 @@ app.delete('/api/movies/:id',(req,res)=>{
     db.deleteMovieById(req.params.id).then(()=>{
         res.status(201).json({Message: "Movie Deleted!"});
     }).catch((err)=>{
-        res.status(404).json({Message: err + "Invalid ID!"});
+        res.status(500).json({Message: err + "Invalid ID!"});
     })
 });
 
@@ -63,7 +63,7 @@ app.put('/api/movies/:id',async (req, res) => {
         await db.updateMovieById(req.body, req.params.id);
         res.json({message: "Movie Updated!"});
       }catch(err){
-        res.status(404).json({message: err});
+        res.status(500).json({message: err});
       }
   });
 
