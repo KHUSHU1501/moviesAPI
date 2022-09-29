@@ -8,75 +8,73 @@
 * Cyclic Link: https://teal-nice-bee.cyclic.app/
 ********************************************************************************/ 
 
-const express = require("express");
-const cors = require("cors");
-const app = express();
-
+const express = require('express')
+const app = express()
+const PORT = process.env.PORT || 8080
+const cors = require('cors')
 const MoviesDB = require("./modules/moviesDB.js");
+const { json } = require('express');
 const db = new MoviesDB();
+require('dotenv').config()
 
-const HTTP_PORT = process.env.PORT || 8080;
-
-app.use(cors());
-require('dotenv').config();
-app.use(express.json());
-
-app.get('/',(req,res)=>{
-    res.json({message: "API Listening!"});
-});
-
-// ADD NEW MOVIE
-app.post('/api/movies', async (req, res) => {
-    try{
-    const newMovie = await db.addNewMovie(req.body); 
-    res.status(201).json(newMovie);
-    }catch(err){
-        res.status(500).json({message: err});
-      };
-  });
-
-//GET MOVIES PER PAGE BY OPTION FILTERS
-app.get('/api/movies',(req, res) => {
-    db.getAllMovies(req.query.page, req.query.perPage, req.query.title)
-        .then((data) => {
-            res.json(data);
-        })
-        .catch((err) => { res.status(500).json({ error: err.message }) });
-  });
-
-//GET MOVIE BY ID
-app.get('/api/movies/:id', async (req, res) => {
-    db.getMovieById(req.params.id)
-        .then((data) => {
-            res.json(data);
-        })
-        .catch((error) => { res.status(500).json({ error: err.message }) });
-    });
-
-//DELETE MOVIE BY ID
-app.delete('/api/movies/:id',(req,res)=>{
-    db.deleteMovieById(req.params.id).then(()=>{
-        res.status(201).json({Message: "Movie Deleted!"});
-    }).catch((err)=>{
-        res.status(500).json({Message: err + "Invalid ID!"});
+db.initialize(process.env.MONGODB_CONN_STRING).then(() => {
+    app.listen(PORT, () => {
+        console.log(`server listening on: ${PORT}`);
     })
+}).catch((err) => {
+    console.log(err);
 });
 
-//UPDATE MOVIE BY ID
-app.put('/api/movies/:id',async (req, res) => {
-    try{
-        await db.updateMovieById(req.body, req.params.id);
-        res.json({message: "Movie Updated!"});
-      }catch(err){
-        res.status(500).json({message: err});
-      }
-  });
+app.use(cors())
+app.use(express.json())
 
-//INITIALIZE
-db.initialize(process.env.MONGODB_CONN_STRING).then(()=>{
-    app.listen(HTTP_PORT, ()=>{
-    console.log(`server listening on: ${HTTP_PORT}`);
-    });
-   }).catch((err)=>{
-    console.log(err);
-   });
+
+app.get('/', (req, res) => {
+    res.json({ message: "API Listening" })
+})
+
+app.post('/api/movies', (req, res) => {
+    if (Object.keys(req.body) === 0)
+        res.status(500).json({ message: "missing body" })
+    else
+        db.addNewMovie(req.body)
+            .then((data) => { res.status(200).json(data) })
+            .cathch((err) => { res.status(500).json({ error: err.message }) })
+})
+
+app.get('/api/movies', (req, res) => {
+    if (!req.query.page || !req.query.perPage)
+        res.status(500).json({ message: "missing query page/perPage" })
+    else {
+        db.getAllMovies(req.query.page, req.query.perPage, req.query.title)
+            .then((data) => {
+                if (data.length === 0) res.status(204).json({ message: "no data found" })
+                else res.json(data)
+            })
+            .catch((err) => { res.status(500).json({ error: err.message }) })
+
+    }
+})
+
+app.get('/api/movies/:_id', (req, res) => {
+    db.getMovieById(req.params._id)
+        .then((data) => {
+            if (data.length === 0) res.status(204).json({ message: "no data found" })
+            else res.json(data)
+        })
+        .catch((error) => { res.status(500).json({ error: err.message }) })
+})
+
+app.put('/api/movie', (req, res) => {
+    if (Object.keys(req.body).length === 0) res.status(500).json({ message: "empty body" })
+    else
+        db.updateMovieById(req.body, req.params._id)
+            .then(() => { res.status(201).json({ message: "update successfully" }) })
+            .catch((err) => { res.status(500).json({ error: err.message }) })
+})
+
+app.delete('/api/movies', (req, res) => {
+    db.deleteMovieById(req.params._id)
+        .then(() => { res.status(201).json({ message: "data deleted" }) })
+        .catch((err) => { res.status(500).json({ error: err.message }) })
+})
