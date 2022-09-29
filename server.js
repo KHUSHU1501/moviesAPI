@@ -53,10 +53,13 @@ app.get('/api/movies/:id', async (req, res) => {
         if(data){
             res.status(201).json(data);
         }
-        res.send("Not Found!");
+        else{
+            res.send("Not Found!");
+        }
       }catch(err){
         res.status(500).json({message: err});
-      }  });
+      }  
+    });
 
 //DELETE MOVIE BY ID
 app.delete('/api/movies/:id',(req,res)=>{
