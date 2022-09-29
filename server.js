@@ -36,29 +36,27 @@ app.post('/api/movies', async (req, res) => {
   });
 
 //GET MOVIES PER PAGE BY OPTION FILTERS
-app.get('/api/movies',async (req, res) => {
-    try{
-       const data = await db.getAllMovies(req.query.page, req.query.perPage, req.query.title);
-        res.json(data);
-    }
-    catch(err){
-        res.status(500).json({message: err});
+app.get('/api/movies',(req, res) => {
+    if (!req.query.page || !req.query.perPage)
+        res.status(500).json({ message: "missing query page/perPage" })
+    else {
+        db.getAllMovies(req.query.page, req.query.perPage, req.query.title)
+            .then((data) => {
+                if (data.length === 0) res.status(204).json({ message: "no data found" })
+                else res.json(data)
+            })
+            .catch((err) => { res.status(500).json({ error: err.message }) })
     }
   });
 
 //GET MOVIE BY ID
 app.get('/api/movies/:id', async (req, res) => {
-    try{
-        const data = await db.getMovieById(req.params.id); 
-        if(data){
-            res.status(201).json(data);
-        }
-        else{
-            res.send("Not Found!");
-        }
-      }catch(err){
-        res.status(500).json({message: err});
-      }  
+    db.getMovieById(req.params.id)
+        .then((data) => {
+            if (data.length === 0) res.status(204).json({ message: "no data found" })
+            else res.json(data)
+        })
+        .catch((error) => { res.status(500).json({ error: err.message }) }) 
     });
 
 //DELETE MOVIE BY ID
